@@ -1,0 +1,30 @@
+# Environment variables; examples must contain placeholders only
+.env
+.env.*
+!.env.example
+
+# Local CLI authentication and state
+/.codex/
+/.claude/
+/.claude.json
+/secrets/
+/.ssh/
+*.pem
+*.key
+
+# Local runtime data and bind mounts
+/runtime/
+/volumes/
+/workspace/
+/workspaces/
+*.log
+
+# Local overrides
+compose.override.yml
+compose.override.yaml
+
+# OS and editor temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
