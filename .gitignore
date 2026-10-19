@@ -19,9 +19,14 @@
 /workspaces/
 *.log
 
-# Local overrides
+# Local overrides and private proxy configuration
 compose.override.yml
 compose.override.yaml
+compose.private*.yml
+compose.private*.yaml
+/proxy.local/
+/proxy*.local.yaml
+/proxy*.local.yml
 
 # OS and editor temporary files
 .DS_Store

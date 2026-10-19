@@ -1,0 +1,29 @@
+Port 2222
+ListenAddress 0.0.0.0
+HostKey /home/agent/.ssh-host/ssh_host_ed25519_key
+PidFile /home/agent/.ssh-host/sshd.pid
+AuthorizedKeysFile /home/agent/.ssh/authorized_keys
+
+AllowUsers agent
+PermitRootLogin no
+PubkeyAuthentication yes
+AuthenticationMethods publickey
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+UsePAM no
+StrictModes yes
+PermitUserEnvironment no
+X11Forwarding no
+AllowAgentForwarding no
+PermitTunnel no
+GatewayPorts no
+# No forwarding by default. SFTP works independently.
+DisableForwarding yes
+PermitTTY yes
+UseDNS no
+PrintMotd no
+LogLevel VERBOSE
+Subsystem sftp internal-sftp
+SetEnv HOME=/home/agent CODEX_HOME=/home/agent/.codex BUN_INSTALL=/home/agent/.bun DISABLE_AUTOUPDATER=1 LANG=C.UTF-8
+SetEnv PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.bun/bin:/home/agent/.local/bin
