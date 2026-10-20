@@ -1,34 +1,30 @@
 # 设计记录
 
-## 当前目标
+## 本次实现提案
 
-使用 Docker Compose 管理 Claude Code 与 Codex 的容器运行环境，保持初始范围简洁。镜像组织、服务划分和配置接口尚未确定。
+从仅含文档的仓库扩展为单镜像、单非 root 用户的 Claude Code + Codex + Bun 环境。
+基础为 Debian stable-slim，构建时解析 stable/native 软件，不运行 npm 安装链。
+SSH/SFTP 与 tmux 是基础接入；两种工具各自的官方远程能力按自己的账户要求和生命周期使用。
 
-## 接入方式
+配置使用专用容器 home 卷，项目逐个 bind mount。home 包含 .codex、.claude、
+.claude.json 和用户 Bun globals；不是用户真实宿主 home。
+native 工具安装在 /opt/agent-tools。Codex 默认以前台 --no-daemon 模式运行，
+入口不重定向 package 目录、不修改 daemon settings。
+默认 launcher 直接使用镜像内 native package，旧 home 中同名命令不会在默认 PATH 下优先。
+高级 daemon 模式的包持久化、自动更新和生命周期不由本实现管理。
 
-- SSH 登录宿主机，再进入容器运行 CLI。
-- 工具自身的远程接入作为另一条路径，后续核对各工具支持方式、认证要求及会话生命周期，不假定两者行为相同。
-- 文件传输、网络桥接或 FRP 是后续可选扩展，不是首版前置条件。
+镜像默认不自动升级。标准升级是拉取/构建新镜像后重建容器；
+显式手动更新只改当前容器层。fresh build 使用 --pull --no-cache。
+构建记录 resolved versions、下载/二进制 SHA-256、Debian 包版本与 custom hook hash。
 
-Docker bridge 网络、文件共享和反向隧道承担不同职责，具体需求明确后分别选择方案。
+独立透明代理只是可选集成。已有同机 SOCKS 可以复用，但其可达地址、最终出口、
+DNS/IPv6/UDP、故障阻断和 SSH 回程未验证。agent 不持有网络管理权。
+不把代理变量当全流量保证，也不承诺服务方无法识别代理。
 
-## 待讨论
+## 保留边界
 
-- 两套 CLI 同镜像还是分服务，以及基础镜像、安装方式和版本固定策略。
-- 非 root 运行、宿主机 UID/GID 与挂载目录权限。
-- 项目文件、认证状态、缓存和会话记录的独立持久化。
-- 更新、重建、备份及认证失效时的行为。
-- 远程接入、文件传输和出站网络配置的可选边界。
-
-## 本次初始化范围
-
-仅建立 README、docs 目录和基础忽略规则。暂不实现 Dockerfile、Compose、部署脚本或 CI，不发布镜像、不修改服务器。保留仓库已有 MIT 许可证。
-
-## 凭据与本地数据
-
-- 不将密钥、访问令牌、认证缓存、真实环境变量或个人网络信息写入仓库和镜像层。
-- 配置示例只用占位值；`.env.example` 可提交，但不能包含真实凭据。
-- 本地运行目录及私有 Compose override 不纳入版本控制。
-- `.gitignore` 不会清除已经提交的敏感数据；提交前仍需检查内容和 Git 状态。
-
-以上是设计方向，不是已经实现的安全保证。网络出口配置也不保证避免服务方的账号风控。
+- 不安装 sudo，不默认安装 Node/npm，不挂载 Docker socket，不给 agent privileged
+- 自定义工具通过 fork 的 build-time shell hook 添加；失败停止构建，无内嵌凭据
+- 没有自动构建发布、CI、服务器修改或网络部署
+- 保留已有 MIT LICENSE；第三方软件遵循各自许可与服务条款
+- 本提案尚未通过实际构建/运行验收，参见 validation.md

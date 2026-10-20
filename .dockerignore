@@ -1,0 +1,11 @@
+*
+!Dockerfile
+!scripts/
+!scripts/tools-update.sh
+!scripts/agent-cli.sh
+!scripts/entrypoint.sh
+!config/
+!config/sshd_config
+!config/agent-profile.sh
+!custom/
+!custom/install.sh

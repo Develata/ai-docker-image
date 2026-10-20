@@ -1,0 +1,42 @@
+services:
+  agent:
+    image: ${AGENT_IMAGE:-ai-agent:local}
+    build:
+      context: .
+      args:
+        AGENT_UID: ${AGENT_UID:-1000}
+        AGENT_GID: ${AGENT_GID:-1000}
+    init: true
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ports:
+      - "${SSH_BIND_ADDRESS:-127.0.0.1}:${SSH_PORT:-2222}:2222"
+    volumes:
+      - agent-home:/home/agent
+      - type: bind
+        source: ${AUTHORIZED_KEYS_FILE:-./runtime/authorized_keys}
+        target: /run/agent-authorized-keys
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${PROJECT_ONE:?Set PROJECT_ONE in .env}
+        target: /workspaces/project-one
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${PROJECT_TWO:?Set PROJECT_TWO in .env}
+        target: /workspaces/project-two
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 2222"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 30s
+
+volumes:
+  agent-home:

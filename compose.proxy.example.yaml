@@ -1,0 +1,37 @@
+# Optional WIRING example for a separately reviewed mihomo configuration.
+# Requires Docker Compose with !reset support (use v2.24.4+).
+# It does not install a host firewall or guarantee fail-closed behavior.
+services:
+  agent:
+    network_mode: service:proxy
+    ports: !reset []
+    depends_on:
+      proxy:
+        condition: service_started
+
+  proxy:
+    image: ${PROXY_IMAGE:?Set a reviewed official mihomo image reference, preferably a digest}
+    user: "0:0"
+    init: true
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [NET_ADMIN]
+    security_opt: [no-new-privileges:true]
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "${SSH_BIND_ADDRESS:-127.0.0.1}:${SSH_PORT:-2222}:2222"
+    command: ["-d", "/var/lib/mihomo", "-f", "/etc/mihomo/config.yaml"]
+    volumes:
+      - type: bind
+        source: ${PROXY_CONFIG:?Set an existing, private, reviewed mihomo config path}
+        target: /etc/mihomo/config.yaml
+        read_only: true
+        bind:
+          create_host_path: false
+      - proxy-state:/var/lib/mihomo
+
+volumes:
+  proxy-state:
