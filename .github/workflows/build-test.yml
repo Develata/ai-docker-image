@@ -18,9 +18,9 @@ jobs:
       AGENT_IMAGE: ai-agent:ci-${{ github.run_id }}-${{ github.run_attempt }}
       AGENT_UID: '1000'
       AGENT_GID: '1000'
-      PROJECT_ONE: ${{ runner.temp }}/ai-image-project-one
-      PROJECT_TWO: ${{ runner.temp }}/ai-image-project-two
-      AUTHORIZED_KEYS_FILE: ${{ runner.temp }}/ai-image-authorized-keys
+      PROJECT_ONE: /tmp/ai-image-project-one
+      PROJECT_TWO: /tmp/ai-image-project-two
+      AUTHORIZED_KEYS_FILE: /tmp/ai-image-authorized-keys
       SSH_BIND_ADDRESS: 127.0.0.1
     steps:
       - name: Check out the exact PR head
