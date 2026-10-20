@@ -1,0 +1,48 @@
+name: PR 1 build and smoke test
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    if: github.event.pull_request.number == 1 && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      COMPOSE_PROJECT_NAME: ai-image-ci-${{ github.run_id }}-${{ github.run_attempt }}
+      AGENT_IMAGE: ai-agent:ci-${{ github.run_id }}-${{ github.run_attempt }}
+      AGENT_UID: '1000'
+      AGENT_GID: '1000'
+      PROJECT_ONE: ${{ runner.temp }}/ai-image-project-one
+      PROJECT_TWO: ${{ runner.temp }}/ai-image-project-two
+      AUTHORIZED_KEYS_FILE: ${{ runner.temp }}/ai-image-authorized-keys
+      SSH_BIND_ADDRESS: 127.0.0.1
+    steps:
+      - name: Check out the exact PR head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Prepare disposable test inputs and check shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$PROJECT_ONE" "$PROJECT_TWO"
+          touch "$AUTHORIZED_KEYS_FILE"
+          chmod 644 "$AUTHORIZED_KEYS_FILE"
+          for script in scripts/*.sh custom/install.sh config/agent-profile.sh tests/check.sh; do
+            bash -n "$script"
+          done
+          docker compose config --quiet
+      - name: Build without publishing
+        run: bash scripts/build.sh
+      - name: Run existing smoke checks without publishing ports
+        run: bash tests/check.sh
+      - name: Remove this run's disposable containers and volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans
